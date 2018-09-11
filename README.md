@@ -17,3 +17,15 @@ yield return new Tween(gameObject)
 ```
 
 `StartCoroutine(this)` is necessary for things to work.
+
+## Todo
+
+1. Easings (maybe move easing declaration to tweener terminators)
+2. Hardcode common components
+3. Proper Color() Alpha() extensions
+4. Different playbacks (like loop, backwards, etc.)
+5. Attach different game object
+
+## Maybe?
+1. Custom Unity editor
+2. Standard tweens (then we will need Tweens to be tweakable after constructing)
