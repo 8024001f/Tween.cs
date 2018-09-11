@@ -1,6 +1,6 @@
 # Tween.cs
 
-No need for `using`, everything necessary is in global namespace.Just plop Tween.cs anywhere in your project.
+No need for `using`, everything necessary is in global namespace. Just drop Tween.cs anywhere in your project.
 
 ```csharp
 yield return new Tween(gameObject)
