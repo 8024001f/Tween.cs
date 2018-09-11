@@ -12,5 +12,8 @@ yield return new Tween(gameObject)
     .Duration(0.5f)
     .Then
     .Alpha().To(0)
-    .Duration(1);
+    .Duration(1)
+    .StartCoroutine(this);
 ```
+
+`StartCoroutine(this)` is necessary for things to work.
