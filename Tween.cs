@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Tweens;
+using Razensoft.Tween;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -219,9 +219,10 @@ public class Easing
     }
 }
 
-
-namespace Tweens
+namespace Razensoft.Tween
 {
+    using Tween = global::Tween;
+
     public class TweenerGroup
     {
         private readonly List<Tweener> tweeners = new List<Tweener>();
