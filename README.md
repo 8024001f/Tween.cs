@@ -4,8 +4,8 @@ No need for `using`, everything necessary is in global namespace. Just drop Twee
 
 ```csharp
 yield return new Tween(gameObject)
-    .Transform.Position.X.Add(10, Easing.BounceOut)
-    .Transform.Scale.To(Vector2.one * 0.5f, Easing.BounceOut)
+    .Position.X.Add(10, Easing.BounceOut)
+    .Scale.To(Vector2.one * 0.5f, Easing.BounceOut)
     .Duration(1)
     .Then
     .Color.To(Color.red)
@@ -17,9 +17,16 @@ yield return new Tween(gameObject)
 
 ```csharp
 yield return new Tween(gameObject)
+    // This
     .Position.To(Vector3.left)
     .Scale.X.From(0).Add(2)
     .Rotation.Z.From(0).To(90)
+    .Duration(1)
+    .Then
+    // Equals to this
+    .Transform.Position.To(Vector3.left)
+    .Transform.Scale.X.From(0).Add(2)
+    .Transform.Rotation.Z.From(0).To(90)
     .Duration(1)
     .StartCoroutine(this);
 ```
