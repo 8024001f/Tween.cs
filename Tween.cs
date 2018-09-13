@@ -1005,9 +1005,9 @@ namespace Razensoft.Tweens
             get { return Vector3(t => t.localScale, (t, v) => t.localScale = v); }
         }
 
-        public QuaternionTweener Rotation
+        public Vector3Tweener Rotation
         {
-            get { return Quaternion(t => t.rotation, (t, v) => t.rotation = v); }
+            get { return Quaternion(t => t.rotation, (t, v) => t.rotation = v).Euler; }
         }
     }
 }
