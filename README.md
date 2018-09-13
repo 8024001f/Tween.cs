@@ -4,14 +4,55 @@ No need for `using`, everything necessary is in global namespace. Just drop Twee
 
 ```csharp
 yield return new Tween(gameObject)
-    .Transform.Position.Add(Vector2.one)
-    .Transform.Rotation.Z.From(0).To(90, Easing.Sine)
+    .Transform.Position.X.Add(10, Easing.BounceOut)
+    .Transform.Scale.To(Vector2.one * 0.5f, Easing.BounceOut)
     .Duration(1)
     .Then
-    .Color().To(Color.red, Easing.Quint)
+    .Color.To(Color.red)
     .Duration(0.5f)
-    .Then
-    .Alpha().To(0)
+    .StartCoroutine(this);
+```
+
+`Tween` class provides shortcuts for `.Transform.Position`, `.Transform.Scale` and `.Transform.Rotation`...
+
+```csharp
+yield return new Tween(gameObject)
+    .Position.To(Vector3.left)
+    .Scale.X.From(0).Add(2)
+    .Rotation.Z.From(0).To(90)
+    .Duration(1)
+    .StartCoroutine(this);
+```
+
+... and for color and alpha (works for Graphic, SpriteRenderer and CanvasGroup)
+
+```csharp
+yield return new Tween(gameObject)
+    .Color.To(Color.red)
+    .Alpha.To(0)
+    .Duration(1)
+    .StartCoroutine(this);
+```
+
+There are also a couple of extensions for common components
+
+```csharp
+yield return new Tween(gameObject)
+    .Image().FillAmount.To(1)
+    .Text().FontSize.From(20).To(24)
+    .AudioSource().Volume.To(0)
+    .Duration(5)
+    .StartCoroutine(this);
+```
+
+All [easings](https://easings.net) can be passed in To() and Add() methods
+
+```csharp
+yield return new Tween(gameObject)
+    .Position.Add(Vector3.one, Easing.SineOut)
+    .Scale.X.From(0).Add(2, Easing.BounceInOut)
+    .Rotation.Z.From(0).Add(90, Easing.ExpoOutIn)
+    .Color.To(Color.red, Easing.QuartIn)
     .Duration(1)
     .StartCoroutine(this);
 ```
@@ -20,11 +61,9 @@ yield return new Tween(gameObject)
 
 ## Todo
 
-1. Hardcode common components
-2. Proper Color() Alpha() extensions
-3. Different playbacks (like loop, backwards, etc.)
-4. Attach different game object
+- Different playbacks (like loop, backwards, etc.)
+- Attach different game object
 
 ## Maybe?
-1. Custom Unity editor
-2. Standard tweens (then we will need Tweens to be tweakable after constructing)
+- Custom Unity editor
+- Standard tweens (then we will need Tweens to be tweakable after constructing)
