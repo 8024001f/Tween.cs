@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Razensoft.Tweens;
+using Razensoft.Tweens.ComponentTweeners;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -62,14 +63,92 @@ public class Tween
         return this;
     }
 
-    public ComponentTweener<T> Component<T>()
+    public ComponentTweeners<T> Component<T>()
     {
-        return new ComponentTweener<T>(this, GameObject.GetComponent<T>());
+        return new ComponentTweeners<T>(this, GameObject.GetComponent<T>());
     }
 
-    public TransformTweener Transform
+    public TTweener Component<TComponent, TTweener>(Func<TComponent, TTweener> createTweener)
     {
-        get { return new TransformTweener(this, GameObject.transform); }
+        var component = gameObject.GetComponent<TComponent>();
+        if (component == null)
+        {
+            throw new InvalidOperationException("Game object doesn't have " + typeof(TComponent).Name + " component.");
+        }
+        return createTweener(component);
+    }
+
+    public TransformTweeners Transform
+    {
+        get { return new TransformTweeners(this, GameObject.transform); }
+    }
+
+    public Vector3Tweener Position
+    {
+        get { return Transform.Position; }
+    }
+
+    public Vector3Tweener Rotation
+    {
+        get { return Transform.Rotation; }
+    }
+
+    public Vector3Tweener Scale
+    {
+        get { return Transform.Scale; }
+    }
+
+    public ColorTweener Color
+    {
+        get {
+            var components = gameObject.GetComponents<Component>();
+            foreach (var component in components)
+            {
+                var graphic = component as Graphic;
+                if (graphic != null)
+                {
+                    return new ComponentTweeners<Graphic>(this, graphic).Color();
+                }
+
+                var spriteRenderer = component as SpriteRenderer;
+                if (spriteRenderer != null)
+                {
+                    return new SpriteRendererTweeners(this, spriteRenderer).Color;
+                }
+            }
+
+            throw new InvalidOperationException("Game object doesn't contain Graphic or SpriteRenderer component.");
+        }
+    }
+
+    public FloatTweener Alpha
+    {
+        get {
+            var components = gameObject.GetComponents<Component>();
+            foreach (var component in components)
+            {
+                var graphic = component as Graphic;
+                if (graphic != null)
+                {
+                    return new ComponentTweeners<Graphic>(this, graphic).Color().A;
+                }
+
+                var spriteRenderer = component as SpriteRenderer;
+                if (spriteRenderer != null)
+                {
+                    return new SpriteRendererTweeners(this, spriteRenderer).Color.A;
+                }
+
+                var canvasGroup = component as CanvasGroup;
+                if (canvasGroup != null)
+                {
+                    return new ComponentTweeners<CanvasGroup>(this, canvasGroup)
+                        .Float(g => g.alpha, (g, v) => g.alpha = v);
+                }
+            }
+
+            throw new InvalidOperationException("Game object doesn't contain Graphic, SpriteRenderer or CanvasGroup component.");
+        }
     }
 
     protected TweenerGroup CurrentGroup
@@ -108,72 +187,6 @@ public class Tween
                 yield break;
             }
         }
-    }
-}
-
-// ReSharper disable once PartialTypeWithSinglePart
-public static partial class TweenExtensions
-{
-    public static ColorTweener Color(this Tween tween)
-    {
-        var components = tween.GameObject.GetComponents<Component>();
-        foreach (var component in components)
-        {
-            var graphic = component as Graphic;
-            if (graphic != null)
-            {
-                return new ComponentTweener<Graphic>(tween, graphic).Color(g => g.color,
-                    (g, v) => g.color = v);
-            }
-
-            var spriteRenderer = component as SpriteRenderer;
-            if (spriteRenderer != null)
-            {
-                return new ComponentTweener<SpriteRenderer>(tween, spriteRenderer).Color(g => g.color,
-                    (g, v) => g.color = v);
-            }
-        }
-
-        throw new NotImplementedException();
-    }
-
-    public static FloatTweener Alpha(this Tween tween)
-    {
-        var components = tween.GameObject.GetComponents<Component>();
-        foreach (var component in components)
-        {
-            var graphic = component as Graphic;
-            if (graphic != null)
-            {
-                return new ComponentTweener<Graphic>(tween, graphic).Float(g => g.color.a,
-                    (g, v) =>
-                    {
-                        var color = g.color;
-                        color.a = v;
-                        g.color = color;
-                    });
-            }
-
-            var spriteRenderer = component as SpriteRenderer;
-            if (spriteRenderer != null)
-            {
-                return new ComponentTweener<SpriteRenderer>(tween, spriteRenderer).Float(g => g.color.a,
-                    (g, v) =>
-                    {
-                        var color = g.color;
-                        color.a = v;
-                        g.color = color;
-                    });
-            }
-
-            var canvasGroup = component as CanvasGroup;
-            if (canvasGroup != null)
-            {
-                return new ComponentTweener<CanvasGroup>(tween, canvasGroup).Float(g => g.alpha, (g, v) => g.alpha = v);
-            }
-        }
-
-        throw new NotImplementedException();
     }
 }
 
@@ -484,6 +497,35 @@ public class Easing
     }
 }
 
+// ReSharper disable once PartialTypeWithSinglePart
+public static partial class TweenExtensions
+{
+    public static ImageTweeners Image(this Tween tween)
+    {
+        return tween.Component<Image, ImageTweeners>(c => new ImageTweeners(tween, c));
+    }
+
+    public static TextTweeners Text(this Tween tween)
+    {
+        return tween.Component<Text, TextTweeners>(c => new TextTweeners(tween, c));
+    }
+
+    public static SpriteRendererTweeners SpriteRenderer(this Tween tween)
+    {
+        return tween.Component<SpriteRenderer, SpriteRendererTweeners>(c => new SpriteRendererTweeners(tween, c));
+    }
+
+    public static AudioSourceTweeners AudioSource(this Tween tween)
+    {
+        return tween.Component<AudioSource, AudioSourceTweeners>(c => new AudioSourceTweeners(tween, c));
+    }
+
+    public static ColorTweener Color<T>(this ComponentTweeners<T> tweeners) where T: Graphic
+    {
+        return tweeners.Color(c => c.color, (c, v) => c.color = v);
+    }
+}
+
 namespace Razensoft.Tweens
 {
     public class TweenerGroup
@@ -742,6 +784,21 @@ namespace Razensoft.Tweens
         }
     }
 
+    public class Int32Tweener : Tweener<int>
+    {
+        public Int32Tweener(Tween tween) : base(tween) { }
+
+        protected override int LerpUnclamped(int from, int to, float t)
+        {
+            return from + (int) ((to - from) * t);
+        }
+
+        protected override int Add(int first, int second)
+        {
+            return first + second;
+        }
+    }
+
     public class Vector3Tweener : Tweener<Vector3>
     {
         public Vector3Tweener(Tween tween) : base(tween) { }
@@ -924,12 +981,51 @@ namespace Razensoft.Tweens
         }
     }
 
-    public class ComponentTweener<T>
+    public class TweenerFactory
+    {
+        private readonly Tween tween;
+
+        public TweenerFactory(Tween tween)
+        {
+            this.tween = tween;
+        }
+
+        public Int32Tweener Int32(Func<int> getValue, Action<int> setValue)
+        {
+            return new Int32Tweener(tween).Bind(getValue, setValue) as Int32Tweener;
+        }
+
+        public FloatTweener Float(Func<float> getValue, Action<float> setValue)
+        {
+            return new FloatTweener(tween).Bind(getValue, setValue) as FloatTweener;
+        }
+
+        public Vector3Tweener Vector3(Func<Vector3> getValue, Action<Vector3> setValue)
+        {
+            return new Vector3Tweener(tween).Bind(getValue, setValue) as Vector3Tweener;
+        }
+
+        public QuaternionTweener Quaternion(Func<Quaternion> getValue, Action<Quaternion> setValue)
+        {
+            return new QuaternionTweener(tween).Bind(getValue, setValue) as QuaternionTweener;
+        }
+
+        public ColorTweener Color(Func<Color> getValue, Action<Color> setValue)
+        {
+            return new ColorTweener(tween).Bind(getValue, setValue) as ColorTweener;
+        }
+    }
+}
+
+namespace Razensoft.Tweens.ComponentTweeners
+{
+#pragma warning disable 0108
+    public class ComponentTweeners<T>
     {
         private readonly TweenerFactory tweenerFactory;
         private readonly T component;
 
-        public ComponentTweener(Tween tween, T component)
+        public ComponentTweeners(Tween tween, T component)
         {
             this.component = component;
             tweenerFactory = new TweenerFactory(tween);
@@ -938,6 +1034,11 @@ namespace Razensoft.Tweens
         protected T Component
         {
             get { return component; }
+        }
+
+        public Int32Tweener Int32(Func<T, int> getValue, Action<T, int> setValue)
+        {
+            return tweenerFactory.Int32(() => getValue(Component), value => setValue(Component, value));
         }
 
         public FloatTweener Float(Func<T, float> getValue, Action<T, float> setValue)
@@ -961,53 +1062,74 @@ namespace Razensoft.Tweens
         }
     }
 
-    public class TweenerFactory
+    public class TransformTweeners : ComponentTweeners<Transform>
     {
-        private readonly Tween tween;
-
-        public TweenerFactory(Tween tween)
-        {
-            this.tween = tween;
-        }
-
-        public FloatTweener Float(Func<float> getValue, Action<float> setValue)
-        {
-            return new FloatTweener(tween).Bind(getValue, setValue) as FloatTweener;
-        }
-
-        public Vector3Tweener Vector3(Func<Vector3> getValue, Action<Vector3> setValue)
-        {
-            return new Vector3Tweener(tween).Bind(getValue, setValue) as Vector3Tweener;
-        }
-
-        public QuaternionTweener Quaternion(Func<Quaternion> getValue, Action<Quaternion> setValue)
-        {
-            return new QuaternionTweener(tween).Bind(getValue, setValue) as QuaternionTweener;
-        }
-
-        public ColorTweener Color(Func<Color> getValue, Action<Color> setValue)
-        {
-            return new ColorTweener(tween).Bind(getValue, setValue) as ColorTweener;
-        }
-    }
-
-    public class TransformTweener : ComponentTweener<Transform>
-    {
-        public TransformTweener(Tween tween, Transform transform) : base(tween, transform) { }
+        public TransformTweeners(Tween tween, Transform transform) : base(tween, transform) { }
 
         public Vector3Tweener Position
         {
-            get { return Vector3(t => t.position, (t, v) => t.position = v); }
+            get { return Vector3(c => c.position, (c, v) => c.position = v); }
         }
 
         public Vector3Tweener Scale
         {
-            get { return Vector3(t => t.localScale, (t, v) => t.localScale = v); }
+            get { return Vector3(c => c.localScale, (c, v) => c.localScale = v); }
         }
 
         public Vector3Tweener Rotation
         {
-            get { return Quaternion(t => t.rotation, (t, v) => t.rotation = v).Euler; }
+            get { return Quaternion(c => c.rotation, (c, v) => c.rotation = v).Euler; }
         }
     }
+
+    public class ImageTweeners : ComponentTweeners<Image>
+    {
+        public ImageTweeners(Tween tween, Image component) : base(tween, component) { }
+
+        public FloatTweener FillAmount
+        {
+            get { return Float(c => c.fillAmount, (c, v) => c.fillAmount = v); }
+        }
+
+        public ColorTweener Color
+        {
+            get { return this.Color(); }
+        }
+    }
+
+    public class TextTweeners : ComponentTweeners<Text>
+    {
+        public TextTweeners(Tween tween, Text component) : base(tween, component) { }
+
+        public Int32Tweener FontSize
+        {
+            get { return Int32(c => c.fontSize, (c, v) => c.fontSize = v); }
+        }
+
+        public ColorTweener Color
+        {
+            get { return this.Color(); }
+        }
+    }
+
+    public class SpriteRendererTweeners : ComponentTweeners<SpriteRenderer>
+    {
+        public SpriteRendererTweeners(Tween tween, SpriteRenderer component) : base(tween, component) { }
+
+        public ColorTweener Color
+        {
+            get { return Color(c => c.color, (c, v) => c.color = v); }
+        }
+    }
+
+    public class AudioSourceTweeners : ComponentTweeners<AudioSource>
+    {
+        public AudioSourceTweeners(Tween tween, AudioSource component) : base(tween, component) { }
+
+        public FloatTweener Volume
+        {
+            get { return Float(c => c.volume, (c, v) => c.volume = v); }
+        }
+    }
+#pragma warning restore 0108
 }
