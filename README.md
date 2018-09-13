@@ -31,7 +31,7 @@ yield return new Tween(gameObject)
     .StartCoroutine(this);
 ```
 
-... and for color and alpha (works for Graphic, SpriteRenderer and CanvasGroup)
+... and for color and alpha (works for `Graphic`, `SpriteRenderer` and `CanvasGroup`)
 
 ```csharp
 yield return new Tween(gameObject)
@@ -52,7 +52,7 @@ yield return new Tween(gameObject)
     .StartCoroutine(this);
 ```
 
-All [easings](https://easings.net) can be passed in To() and Add() methods
+All [easings](https://easings.net) can be passed in `To()` and `Add()` methods
 
 ```csharp
 yield return new Tween(gameObject)
