@@ -5,7 +5,7 @@ No need for `using`, everything necessary is in global namespace. Just drop Twee
 ```csharp
 yield return new Tween(gameObject)
     .Transform.Position.Add(Vector2.one)
-    .Transform.Rotation.Euler.Z.From(0).To(90, Easing.Sine)
+    .Transform.Rotation.Z.From(0).To(90, Easing.Sine)
     .Duration(1)
     .Then
     .Color().To(Color.red, Easing.Quint)
