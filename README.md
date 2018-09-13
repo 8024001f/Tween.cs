@@ -20,11 +20,10 @@ yield return new Tween(gameObject)
 
 ## Todo
 
-1. Easings (maybe move easing declaration to tweener terminators)
-2. Hardcode common components
-3. Proper Color() Alpha() extensions
-4. Different playbacks (like loop, backwards, etc.)
-5. Attach different game object
+1. Hardcode common components
+2. Proper Color() Alpha() extensions
+3. Different playbacks (like loop, backwards, etc.)
+4. Attach different game object
 
 ## Maybe?
 1. Custom Unity editor
