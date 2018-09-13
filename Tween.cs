@@ -2,9 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Razensoft.Tween;
+using JetBrains.Annotations;
+using Razensoft.Tweens;
 using UnityEngine;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 public class Tween
 {
@@ -102,13 +104,14 @@ public class Tween
 
             if (group.ThenDestroy)
             {
-                UnityEngine.Object.Destroy(GameObject);
+                Object.Destroy(GameObject);
                 yield break;
             }
         }
     }
 }
 
+// ReSharper disable once PartialTypeWithSinglePart
 public static partial class TweenExtensions
 {
     public static ColorTweener Color(this Tween tween)
@@ -174,8 +177,14 @@ public static partial class TweenExtensions
     }
 }
 
+[PublicAPI]
 public class Easing
 {
+    private const float Pi = Mathf.PI;
+    private const float HalfPi = Pi / 2;
+    private const float Ln2 = 0.6931471805599453f;
+    private const float Ln210 = 6.931471805599453f;
+
     private readonly Func<float, float> easing;
 
     public Easing(Func<float, float> easing)
@@ -185,44 +194,298 @@ public class Easing
 
     public float Ease(float value)
     {
+        if (value <= 0)
+        {
+            return 0;
+        }
+        if (value >= 1)
+        {
+            return 1;
+        }
         return easing(value);
     }
 
-    public static Easing Linear
+    public static Easing Default
     {
-        get { return new Easing(f => f); }
+        get { return Linear; }
     }
 
-    public static Easing Sine
+    public static readonly Easing Linear = new Easing(t => t);
+
+    public static readonly Easing SineIn = new Easing(t => -Mathf.Cos(HalfPi * t) + 1);
+    public static readonly Easing SineOut = new Easing(t => Mathf.Sin(HalfPi * t));
+    public static readonly Easing SineInOut = new Easing(t => -Mathf.Cos(Pi * t) / 2 + 0.5f);
+    public static readonly Easing SineOutIn = new Easing(EaseSineOutIn);
+
+    private static float EaseSineOutIn(float t)
     {
-        get { return new Easing(f => Mathf.Sin(f * Mathf.PI / 2)); }
+        if (t < 0.5f)
+        {
+            return 0.5f * Mathf.Sin(t * 2 * HalfPi);
+        }
+        return -0.5f * Mathf.Cos((t * 2 - 1) * HalfPi) + 1;
     }
 
-    public static Easing Quad
+    public static readonly Easing QuadIn = new Easing(t => t * t);
+    public static readonly Easing QuadOut = new Easing(t => -t * (t - 2));
+    public static readonly Easing QuadInOut = new Easing(EaseQuadInOut);
+    public static readonly Easing QuadOutIn = new Easing(EaseQuadOutIn);
+
+    private static float EaseQuadInOut(float t)
     {
-        get { return new Easing(f => Mathf.Pow(f, 2f)); }
+        if (t < 0.5f)
+        {
+            return t * t * 2;
+        }
+        return 1 - --t * t * 2;
     }
 
-    public static Easing Cubic
+    private static float EaseQuadOutIn(float t)
     {
-        get { return new Easing(f => Mathf.Pow(f, 3f)); }
+        if (t < 0.5f)
+        {
+            return -0.5f * (t = t * 2) * (t - 2);
+        }
+        return 0.5f * (t = t * 2 - 1) * t + 0.5f;
     }
 
-    public static Easing Quart
+    public static readonly Easing CubicIn = new Easing(t => t * t * t);
+    public static readonly Easing CubicOut = new Easing(t => 1 + --t * t * t);
+    public static readonly Easing CubicInOut = new Easing(EaseCubicInOut);
+    public static readonly Easing CubicOutIn = new Easing(t => 0.5f * ((t = t * 2 - 1) * t * t + 1));
+
+    private static float EaseCubicInOut(float t)
     {
-        get { return new Easing(f => Mathf.Pow(f, 4f)); }
+        if (t < 0.5f)
+        {
+            return t * t * t * 4;
+        }
+        return 1 + --t * t * t * 4;
     }
 
-    public static Easing Quint
+    public static readonly Easing QuartIn = new Easing(t => t * t * t * t);
+    public static readonly Easing QuartOut = new Easing(t => 1 - --t * t * t * t);
+    public static readonly Easing QuartInOut = new Easing(EaseQuartInOut);
+    public static readonly Easing QuartOutIn = new Easing(EaseQuartOutIn);
+
+    private static float EaseQuartInOut(float t)
     {
-        get { return new Easing(f => Mathf.Pow(f, 5f)); }
+        if (t < 0.5f)
+        {
+            return t * t * t * t * 8;
+        }
+        return (1 - (t = t * 2 - 2) * t * t * t) / 2 + .5f;
+    }
+
+    private static float EaseQuartOutIn(float t)
+    {
+        if (t < 0.5f)
+        {
+            return -0.5f * (t = (t = t * 2 - 1) * t) * t + 0.5f;
+        }
+        return 0.5f * (t = (t = t * 2 - 1) * t) * t + 0.5f;
+    }
+
+    public static readonly Easing QuintIn = new Easing(t => t * t * t * t * t);
+    public static readonly Easing QuintOut = new Easing(t => 1 + --t * t * t * t * t);
+    public static readonly Easing QuintInOut = new Easing(EaseQuintInOut);
+    public static readonly Easing QuintOutIn = new Easing(t => 0.5f * ((t = t * 2 - 1) * (t *= t) * t + 1));
+
+    private static float EaseQuintInOut(float t)
+    {
+        if ((t *= 2) < 1)
+        {
+            return t * t * t * t * t / 2;
+        }
+        return ((t -= 2) * t * t * t * t + 2) / 2;
+    }
+
+    public static readonly Easing ExpoIn = new Easing(t => Mathf.Exp(Ln210 * (t - 1)));
+    public static readonly Easing ExpoOut = new Easing(t => 1 - Mathf.Exp(-Ln210 * t));
+    public static readonly Easing ExpoInOut = new Easing(EaseExpoInOut);
+    public static readonly Easing ExpoOutIn = new Easing(EaseExpoOutIn);
+
+    private static float EaseExpoInOut(float t)
+    {
+        if ((t *= 2) < 1)
+        {
+            return 0.5f * Mathf.Exp(Ln210 * (t - 1));
+        }
+        return 0.5f * (2 - Mathf.Exp(-Ln210 * (t - 1)));
+    }
+
+    private static float EaseExpoOutIn(float t)
+    {
+        if (t < 0.5f)
+        {
+            return 0.5f * (1 - Mathf.Exp(-20 * Ln2 * t));
+        }
+        return 0.5f * (Mathf.Exp(20 * Ln2 * (t - 1)) + 1);
+    }
+
+    public static readonly Easing CircIn = new Easing(t => -(Mathf.Sqrt(1 - t * t) - 1));
+    public static readonly Easing CircOut = new Easing(t => Mathf.Sqrt(1 - (t - 1) * (t - 1)));
+    public static readonly Easing CircInOut = new Easing(EaseCircInOut);
+    public static readonly Easing CircOutIn = new Easing(EaseCircOutIn);
+
+    private static float EaseCircInOut(float t)
+    {
+        if (t < 0.5f)
+        {
+            return (Mathf.Sqrt(1 - t * t * 4) - 1) / -2;
+        }
+        return (Mathf.Sqrt(1 - (t * 2 - 2) * (t * 2 - 2)) + 1) / 2;
+    }
+
+    private static float EaseCircOutIn(float t)
+    {
+        if (t < 0.5f)
+        {
+            return 0.5f * Mathf.Sqrt(1 - (t = t * 2 - 1) * t);
+        }
+        return -0.5f * (Mathf.Sqrt(1 - (t = t * 2 - 1) * t) - 1 - 1);
+    }
+
+    private const float Deviation = 1.70158f;
+    private const float Deviation2 = 2.70158f;
+    public static readonly Easing BackIn = new Easing(t => t * t * (Deviation2 * t - Deviation));
+    public static readonly Easing BackOut = new Easing(t => 1 - --t * t * (-Deviation2 * t - Deviation));
+    public static readonly Easing BackInOut = new Easing(EaseBackInOut);
+    public static readonly Easing BackOutIn = new Easing(EaseBackOutIn);
+
+    private static float EaseBackInOut(float t)
+    {
+        t *= 2;
+        if (t < 1)
+        {
+            return 0.5f * t * t * (Deviation2 * t - Deviation);
+        }
+        t--;
+        return 0.5f * (1 - --t * t * (-Deviation2 * t - Deviation)) + 0.5f;
+    }
+
+    private static float EaseBackOutIn(float t)
+    {
+        if (t < 0.5f)
+        {
+            return 0.5f * ((t = t * 2 - 1) * t * (Deviation2 * t + Deviation) + 1);
+        }
+        return 0.5f * (t = t * 2 - 1) * t * (Deviation2 * t - Deviation) + 0.5f;
+    }
+
+    public static readonly Easing ElasticIn = new Easing(EaseElasticIn);
+    public static readonly Easing ElasticOut = new Easing(EaseElasticOut);
+    public static readonly Easing ElasticInOut = new Easing(EaseElasticInOut);
+    public static readonly Easing ElasticOutIn = new Easing(EaseElasticOutIn);
+
+    private const float Amplitude = 1f;
+    private const float Period = 0.0003f;
+    private const float QPeriod = Period / 4;
+
+    private static float EaseElasticIn(float t)
+    {
+        return -(Amplitude * Mathf.Exp(Ln210 * (t -= 1)) * Mathf.Sin((t * 0.001f - QPeriod) * (2 * Pi) / Period));
+    }
+
+    private static float EaseElasticOut(float t)
+    {
+        return Mathf.Exp(-Ln210 * t) * Mathf.Sin((t * 0.001f - QPeriod) * (2 * Pi) / Period) + 1;
+    }
+
+    private static float EaseElasticInOut(float t)
+    {
+        if ((t *= 2) < 1)
+        {
+            return -0.5f * (Amplitude * Mathf.Exp(Ln210 * (t -= 1)) *
+                            Mathf.Sin((t * 0.001f - QPeriod) * (2 * Pi) / Period));
+        }
+        return Amplitude * Mathf.Exp(-Ln210 * (t -= 1)) * Mathf.Sin((t * 0.001f - QPeriod) * (2 * Pi) / Period) * 0.5f +
+               1;
+    }
+
+    private static float EaseElasticOutIn(float t)
+    {
+        if (t < 0.5f)
+        {
+            return Amplitude / 2 * Mathf.Exp(-Ln210 * t) * Mathf.Sin((t * 0.001f - QPeriod) * (2 * Pi) / Period) + 0.5f;
+        }
+        t = t * 2 - 1;
+        return -(Amplitude / 2 * Mathf.Exp(Ln210 * (t -= 1)) * Mathf.Sin((t * 0.001f - QPeriod) * (2 * Pi) / Period)) +
+               0.5f;
+    }
+
+    public static readonly Easing BounceIn = new Easing(EaseBounceIn);
+    public static readonly Easing BounceOut = new Easing(EaseBounceOut);
+    public static readonly Easing BounceInOut = new Easing(EaseBounceInOut);
+    public static readonly Easing BounceOutIn = new Easing(EaseBounceOutIn);
+
+    private const float B1 = 1 / 2.75f;
+    private const float B2 = 2 / 2.75f;
+    private const float B3 = 1.5f / 2.75f;
+    private const float B4 = 2.5f / 2.75f;
+    private const float B5 = 2.25f / 2.75f;
+    private const float B6 = 2.625f / 2.75f;
+
+    private const float A1 = 7.5625f;
+    private const float A2 = 0.75f;
+    private const float A3 = 0.9375f;
+    private const float A4 = 0.984375f;
+
+    private static float EaseBounceIn(float t)
+    {
+        t = 1 - t;
+        if (t < B1) return 1 - A1 * t * t;
+        if (t < B2) return 1 - (A1 * (t -= B3) * t + A2);
+        if (t < B4) return 1 - (A1 * (t -= B5) * t + A3);
+        return 1 - (A1 * (t -= B6) * t + A4);
+    }
+
+    private static float EaseBounceOut(float t)
+    {
+        if (t < B1) return A1 * t * t;
+        if (t < B2) return A1 * (t -= B3) * t + A2;
+        if (t < B4) return A1 * (t -= B5) * t + A3;
+        return A1 * (t -= B6) * t + A4;
+    }
+
+    private static float EaseBounceInOut(float t)
+    {
+        if (t < 0.5f)
+        {
+            t = 1 - t * 2;
+            if (t < B1) return (1 - A1 * t * t) / 2;
+            if (t < B2) return (1 - (A1 * (t -= B3) * t + A2)) / 2;
+            if (t < B4) return (1 - (A1 * (t -= B5) * t + A3)) / 2;
+            return (1 - (A1 * (t -= B6) * t + A4)) / 2;
+        }
+        t = t * 2 - 1;
+        if (t < B1) return A1 * t * t / 2 + 0.5f;
+        if (t < B2) return (A1 * (t -= B3) * t + A2) / 2 + 0.5f;
+        if (t < B4) return (A1 * (t -= B5) * t + A3) / 2 + 0.5f;
+        return (A1 * (t -= B6) * t + A4) / 2 + 0.5f;
+    }
+
+    private static float EaseBounceOutIn(float t)
+    {
+        if (t < 0.5f)
+        {
+            t *= 2;
+            if (t < B1) return 0.5f * (A1 * t * t);
+            if (t < B2) return 0.5f * (A1 * (t -= B3) * t + A2);
+            if (t < B4) return 0.5f * (A1 * (t -= B5) * t + A3);
+            return 0.5f * (A1 * (t -= B6) * t + A4);
+        }
+
+        t = 1 - (t * 2 - 1);
+        if (t < B1) return 0.5f - 0.5f * (A1 * t * t) + 0.5f;
+        if (t < B2) return 0.5f - 0.5f * (A1 * (t -= B3) * t + A2) + 0.5f;
+        if (t < B4) return 0.5f - 0.5f * (A1 * (t -= B5) * t + A3) + 0.5f;
+        return 0.5f - 0.5f * (A1 * (t -= B6) * t + A4) + 0.5f;
     }
 }
 
-namespace Razensoft.Tween
+namespace Razensoft.Tweens
 {
-    using Tween = global::Tween;
-
     public class TweenerGroup
     {
         private readonly List<Tweener> tweeners = new List<Tweener>();
@@ -272,7 +535,7 @@ namespace Razensoft.Tween
         private Func<T> getValue;
         private Action<T> setValue;
         private ValueRange<T> range;
-        private Easing easing = global::Easing.Linear;
+        protected Easing Easing = Easing.Default;
         protected TweenerFactory TweenerFactory;
 
         protected Tweener(Tween tween)
@@ -283,7 +546,7 @@ namespace Razensoft.Tween
 
         public override void TweenValue(float elapsedFraction)
         {
-            var easedFraction = easing.Ease(elapsedFraction);
+            var easedFraction = Easing.Ease(elapsedFraction);
             Value = LerpUnclamped(range.From, range.To, easedFraction);
         }
 
@@ -300,11 +563,23 @@ namespace Razensoft.Tween
             return new ValueRangeBuilder(value, this);
         }
 
+        public Tween To(T value, Easing easing)
+        {
+            Easing = easing;
+            return To(value);
+        }
+
         public Tween To(T value)
         {
             range = new FromToValueRange<T>(getValue, value);
             AddToTween();
             return tween;
+        }
+
+        public Tween Add(T value, Easing easing)
+        {
+            Easing = easing;
+            return Add(value);
         }
 
         public Tween Add(T value)
@@ -318,12 +593,6 @@ namespace Razensoft.Tween
         {
             this.getValue = getValue;
             this.setValue = setValue;
-            return this;
-        }
-
-        public Tweener<T> Easing(Easing easing)
-        {
-            this.easing = easing;
             return this;
         }
 
@@ -350,11 +619,23 @@ namespace Razensoft.Tween
                 this.tweener = tweener;
             }
 
+            public Tween To(T value, Easing easing)
+            {
+                tweener.Easing = easing;
+                return To(value);
+            }
+
             public Tween To(T value)
             {
                 tweener.range = new FromToValueRange<T>(() => from, value);
                 tweener.AddToTween();
                 return tweener.Tween;
+            }
+
+            public Tween Add(T value, Easing easing)
+            {
+                tweener.Easing = easing;
+                return Add(value);
             }
 
             public Tween Add(T value)
@@ -511,6 +792,12 @@ namespace Razensoft.Tween
             return base.From(vector3);
         }
 
+        public Tween To(Vector2 value, Easing easing)
+        {
+            Easing = easing;
+            return To(value);
+        }
+
         public Tween To(Vector2 value)
         {
             Vector3 vector3 = value;
@@ -518,17 +805,17 @@ namespace Razensoft.Tween
             return base.To(vector3);
         }
 
+        public Tween Add(Vector2 value, Easing easing)
+        {
+            Easing = easing;
+            return Add(value);
+        }
+
         public Tween Add(Vector2 value)
         {
             Vector3 vector3 = value;
             vector3.z = Value.z;
             return base.Add(vector3);
-        }
-
-        // Hiding base to preserve Vector3Tweener typing
-        public new Vector3Tweener Easing(Easing easing)
-        {
-            return (Vector3Tweener)base.Easing(easing);
         }
 
         protected override Vector3 LerpUnclamped(Vector3 from, Vector3 to, float t)
