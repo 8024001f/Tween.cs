@@ -580,9 +580,11 @@ namespace Razensoft.Tweens
         protected Easing Easing = Easing.Default;
         protected TweenerFactory TweenerFactory;
 
-        protected Tweener(Tween tween)
+        protected Tweener(Tween tween, Func<T> getValue, Action<T> setValue)
         {
             this.tween = tween;
+            this.getValue = getValue;
+            this.setValue = setValue;
             TweenerFactory = new TweenerFactory(this.tween);
         }
 
@@ -629,13 +631,6 @@ namespace Razensoft.Tweens
             range = new AddValueRange<T>(value, Add, getValue);
             AddToTween();
             return tween;
-        }
-
-        public Tweener<T> Bind(Func<T> getValue, Action<T> setValue)
-        {
-            this.getValue = getValue;
-            this.setValue = setValue;
-            return this;
         }
 
         protected void AddToTween()
@@ -691,7 +686,7 @@ namespace Razensoft.Tweens
 
     public abstract class ValueRange<T>
     {
-        protected bool initialized;
+        protected bool Initialized;
         private T from;
         private readonly Func<T> getInitialValue;
 
@@ -704,7 +699,7 @@ namespace Razensoft.Tweens
         {
             get
             {
-                if (!initialized)
+                if (!Initialized)
                 {
                     InitializeRange();
                 }
@@ -718,7 +713,7 @@ namespace Razensoft.Tweens
         protected virtual void InitializeRange()
         {
             from = getInitialValue();
-            initialized = true;
+            Initialized = true;
         }
     }
 
@@ -753,7 +748,7 @@ namespace Razensoft.Tweens
         {
             get
             {
-                if (!initialized)
+                if (!Initialized)
                 {
                     InitializeRange();
                 }
@@ -771,7 +766,8 @@ namespace Razensoft.Tweens
 
     public class FloatTweener : Tweener<float>
     {
-        public FloatTweener(Tween tween) : base(tween) { }
+        public FloatTweener(Tween tween, Func<float> getValue, Action<float> setValue) :
+            base(tween, getValue, setValue) { }
 
         protected override float LerpUnclamped(float from, float to, float t)
         {
@@ -786,7 +782,8 @@ namespace Razensoft.Tweens
 
     public class Int32Tweener : Tweener<int>
     {
-        public Int32Tweener(Tween tween) : base(tween) { }
+        public Int32Tweener(Tween tween, Func<int> getValue, Action<int> setValue) :
+            base(tween, getValue, setValue) { }
 
         protected override int LerpUnclamped(int from, int to, float t)
         {
@@ -801,7 +798,8 @@ namespace Razensoft.Tweens
 
     public class Vector3Tweener : Tweener<Vector3>
     {
-        public Vector3Tweener(Tween tween) : base(tween) { }
+        public Vector3Tweener(Tween tween, Func<Vector3> getValue, Action<Vector3> setValue) :
+            base(tween, getValue, setValue) { }
 
         public FloatTweener X
         {
@@ -888,7 +886,8 @@ namespace Razensoft.Tweens
 
     public class ColorTweener : Tweener<Color>
     {
-        public ColorTweener(Tween tween) : base(tween) { }
+        public ColorTweener(Tween tween, Func<Color> getValue, Action<Color> setValue) :
+            base(tween, getValue, setValue) { }
 
         public FloatTweener A
         {
@@ -955,7 +954,8 @@ namespace Razensoft.Tweens
 
     public class QuaternionTweener : Tweener<Quaternion>
     {
-        public QuaternionTweener(Tween tween) : base(tween) { }
+        public QuaternionTweener(Tween tween, Func<Quaternion> getValue, Action<Quaternion> setValue) :
+            base(tween, getValue, setValue) { }
 
         public Vector3Tweener Euler
         {
@@ -992,27 +992,27 @@ namespace Razensoft.Tweens
 
         public Int32Tweener Int32(Func<int> getValue, Action<int> setValue)
         {
-            return new Int32Tweener(tween).Bind(getValue, setValue) as Int32Tweener;
+            return new Int32Tweener(tween, getValue, setValue);
         }
 
         public FloatTweener Float(Func<float> getValue, Action<float> setValue)
         {
-            return new FloatTweener(tween).Bind(getValue, setValue) as FloatTweener;
+            return new FloatTweener(tween, getValue, setValue);
         }
 
         public Vector3Tweener Vector3(Func<Vector3> getValue, Action<Vector3> setValue)
         {
-            return new Vector3Tweener(tween).Bind(getValue, setValue) as Vector3Tweener;
+            return new Vector3Tweener(tween, getValue, setValue);
         }
 
         public QuaternionTweener Quaternion(Func<Quaternion> getValue, Action<Quaternion> setValue)
         {
-            return new QuaternionTweener(tween).Bind(getValue, setValue) as QuaternionTweener;
+            return new QuaternionTweener(tween, getValue, setValue);
         }
 
         public ColorTweener Color(Func<Color> getValue, Action<Color> setValue)
         {
-            return new ColorTweener(tween).Bind(getValue, setValue) as ColorTweener;
+            return new ColorTweener(tween, getValue, setValue);
         }
     }
 }
