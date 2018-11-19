@@ -70,6 +70,7 @@ yield return new Tween(gameObject)
 
 - Different playbacks (like loop, backwards, etc.)
 - Attach different game object
+- `Wait()`, `Set()`, `Delay()`
 
 ## Maybe?
 - Custom Unity editor
